@@ -1,0 +1,1169 @@
+jQuery.fn.submitOnCheck = function() {
+  this.find('input[type=submit]').remove();
+  return this;
+};
+
+jQuery.fn.mentionUsers = function(){
+  var $mention = $(this),
+      listId = $mention.data('list-id'),
+      user_id = $mention.data('user-id');
+
+$mention.atwho({
+  at: "+",
+  displayTpl: "<li data-id= '${id}'><span class='img'><img src='${image_url}'/></span><span class='text'>${name}<small>${email}</small></span></li>",
+  insertTpl: function(){
+    return '${atwho-at}${email}'
+  },
+  callbacks: {
+    remoteFilter: function(query, callback) {
+      if (query.length >= 1) {
+        $.getJSON("/lists/search", {term: query, id:listId, user_id: user_id }, function(data) {
+          callback(data)
+        });
+      }
+    }
+  }
+})}
+
+  // jQuery.fn.autosubmit = function() {
+  //     this.submit(function(event) {
+  //       event.preventDefault();
+  //       var form = $(this);
+  //       $.ajax({
+  //         type: form.attr('method'),
+  //         url: form.attr('action'),
+  //         data: form.serialize()
+  //       }).done(function(data) {
+  //         // Optionally alert the user of success here...
+  //       }).fail(function(data) {
+  //         console.log("data");
+  //         if ($("#error_explanation").length >0){
+  //                 $("#error_explanation").remove();
+  //             }
+  //         console.log(data);
+  //
+  //
+  //       });
+  //     });
+  //     return this;
+  // }
+
+function handler(ev) {
+  var target = $(ev.target);
+  var elId = target.attr('id');
+};
+
+$(document).on('click','input[type=checkbox]', {}, function(event){
+  $(this).parent('form').submit();
+});
+
+$(document).on('click','a[data-behavior="hide-content"]', {}, function(event) {
+  event.preventDefault();
+  var $divTCompleted =   $('#'+ $(this).data('id'));
+      $span = $('a[data-activates= "'+$(this).parents('ul.dropdown-content').attr('id')+'"] span');
+
+  $span.html('Hide');
+  $divTCompleted.html("");
+});
+
+
+/*******************  OPEN MODAL TO CROP AVATAR ***********/
+$(document).on("change", ".ms-upload-avatar input[type='file']", avatarCropModal);
+  // $(document).on("change", 'input#list_image', avatarCropModal);
+
+/******************* SHOW CONTENT IN MODAL **********************/
+$(document).on("click", "[data-behavior='modal']", function(e) {
+    e.preventDefault();
+    var location;
+    var $modal_holder_selector = $("#modal-holder");
+    location = $(this).attr("href");
+
+    $.get(location, function(data) {
+      $modal_holder_selector.html(data);
+      $('.modal',$modal_holder_selector).modal({
+        dismissible: false, // Modal can be dismissed by clicking outside of the modal
+        ready: function(){
+              $("#dropdown-button-name").dropdown("close");
+              $('.mentions').mentionUsers();
+              svg();
+        }, // Callback for Modal open
+        complete: function() {
+
+         } // Callback for Modal close
+      });
+
+      msCollapsible("collapsible");
+      $(".edit_notification_setting").submitOnCheck();
+
+      return $("#ms-modal-dialog").modal("open");
+    })
+    return false;
+})
+
+
+/******************* END CONTENT IN MODAL **********************/
+$(document).on('turbolinks:load',function(){
+
+
+    // CREATE LIST
+    //
+    // $("form#new_list").submit(function(event) {
+    //   alert("a#btn-list-form-submit");
+    //   event.preventDefault();
+    //
+    //     var form = $(this);
+    //     // $.ajax({
+    //     //   type: form.attr('method'),
+    //     //   url: form.attr('action'),
+    //     //   data: form.serialize()
+    //     // }).done(function(data) {
+    //     //   console.log("data");
+    //     //   // Optionally alert the user of success here...
+    //     // }).fail(function(data) {
+    //     //   console.log("data");
+    //     //   if ($("#error_explanation").length >0) {
+    //     //       $("#error_explanation").remove();
+    //     //     }
+    //     //   console.log(data);
+    //     //
+    //     // });
+    //   });
+
+    svg();
+    var $table_of_task = $(".table-of-task"),
+        c = 0,
+        $li_list_user = $('li[id^="list_user_"]');
+        $div_user_tasks = $('.ms-user-tasks', $li_list_user );
+
+    msCollapsible("collapsible");
+    sortableCollaborationUsers($('.sort_c_users'));
+
+    $('.select').material_select();
+
+    droppable_task_to_user_all($div_user_tasks);
+
+    dropdown("[id^=dropdown_list_]","false");
+
+    $("#dropdown-button-name").dropdown({
+            inDuration: 300,
+            outDuration: 225,
+            hover: false, // Activate on hover
+            constrainWidth: false,
+            belowOrigin: true,
+            belowOrigin: true, // Displays dropdown below the button
+            alignment: 'right' // Displays dropdown with edge aligned to the left of button
+          });
+
+    deadlineDatepicker($('input.deadline-datepicker'));
+
+    $('.mentions').mentionUsers();
+    $('.edit_task').submitOnCheck();
+    $('.edit_notification_setting').submitOnCheck();
+
+    $('ul.tabs').tabs();
+
+    $('input.deadline-datepicker.hidden-datepicker').hover(handlerIn, handlerOut);
+
+    // Show action-menu in blockers when mouseover
+    $(document).on("mouseover", ".permitted div.blocker", function(e){
+      $(this).addClass("active");
+    });
+    $(document).on("mouseleave", ".permitted div.blocker", function(e){
+      $(this).removeClass("active");
+    });
+
+    // Modal Close button
+    $(".close").onclick = function(){
+        var div = this.parentElement;
+        div.style.opacity = "0";
+        // Hide the div after 600ms (the same amount of milliseconds it takes to fade out)
+        setTimeout(function(){ div.style.display = "none"; }, 600);
+    };
+
+    $(document).on("click", ".modal-action.modal-close", function(e) {
+        e.preventDefault();
+        $(this).parent(".modal").modal("close");
+    });
+
+    /**************** NAVIGATION ********************/
+    $(document).on('click','a[data-behavior="nav-link"]', {}, function(event){
+      event.preventDefault();
+      var $this = $(this),
+          $parent = $this.parent();
+
+      if (!$parent.is($("li#ms-add"))){
+
+        var id = $this.attr('id');
+
+        $("#form_date").attr('action', '/lists/' + id);
+        var date = $('#form_date').val() ? $('#form_date').val(): new Date();
+
+        $.ajax({
+          complete:function(request){
+            $('.tooltipped').tooltip({delay: 50});
+
+            $('div[id^="incomplete_tasks_"]').each(function (){
+              mySortable($(this));
+            })
+            $("ul.user-lists li.active").removeClass('active');
+            console.log(request);
+            $this.parent().addClass('active');
+          },
+          data:'date='+ date,
+          dataType:'script',
+          type:'get',
+          url: $this.attr('data-href')
+        })
+      }
+
+    });
+
+    /**************** END NAVIGATION ********************/
+
+    return $(document).on("ajax:success", "[data-behavior='modal-form']", function(event, data, status, xhr) {
+      var url;
+      url = xhr.getResponseHeader("Location");
+      if (url) {
+        window.location = url;
+      } else {
+        $("#ms-modal-dialog").modal("close");
+      }
+      return false;
+    })
+
+    /* end modal*/
+    $(".sidebar-collapse").sideNav();
+    // Initialize collapse button
+    $(".button-collapse").sideNav();
+
+    $('.modal-trigger').modal();
+    // MODAL
+    $('#ms-modal-applications').modal({
+      dismissible: false, // Modal can be dismissed by clicking outside of the modal
+      opacity: .5, // Opacity of modal background
+      inDuration: 300, // Transition in duration
+      outDuration: 200, // Transition out duration
+      startingTop: '4%', // Starting top style attribute
+      endingTop: '150px', // Ending top style attribute
+      ready: function(modal, trigger) { // Callback for Modal open. Modal and trigger parameters available.
+
+      },
+      complete: function() {  } // Callback for Modal close
+    })
+
+
+    // var pgurl = window.location.href.substr(window.location.href.lastIndexOf("/")+1);
+    // $("#stand-up ul li a").each(function(){
+    //   if($(this).attr("href") == pgurl || $(this).attr("href") == '' )
+    //   $(this).addClass("active");
+    // })
+    //
+    // $("#stand-up ul.menu li a").hover(function(){
+    //   change_img_nav(this);
+    // }, function(){
+    //   change_img_nav(this)
+    // });
+
+    $('#new_user').validate({
+      debug: true,
+      rules: {
+        'user[image]': {required: true},
+        'user[first_name]': {required: true},
+        'user[last_name]': {required: true},
+        'user[email]': {required: true, email: true},
+        'user[password]': {required: true, minlength: 6},
+        'user[password_confirmation]': {required: true, equalTo: '#user_password'}
+      }
+      // console.log('in');
+    });
+
+    $('#list_new').validate({
+      debug: true,
+      rules: {
+        'list[name]': {required: true},
+      }
+      // console.log('in');
+    });
+
+
+  }); /* end of $(document).on('turbolinks:load',function(){*/
+
+
+
+$(document).on("click","a#user_settings",function(){
+    // var element = $(this),
+    //     formData = new FormData();
+    // // console.log("in #user_settings");
+    // // console.log(element.parents(".edit_user").attr('action'));
+    // // console.log(element.parents(".edit_user").serialize());
+    // event.preventDefault();
+    //
+    // formData.append('user[first_name]', $("input[name='user[first_name]']").val());
+    // formData.append('user[last_name]', $("input[name='user[last_name]']").val());
+    // formData.append('user[new_email]', $("input[name='user[new_email]']").val());
+    // formData.append('user[new_email_confirmation]', $("input[name='user[new_email_confirmation]']").val());
+    // formData.append('user[password]', $("input[name='user[password]']").val());
+    // element.parents(".edit_user").submit();
+
+    //
+    // $.ajax({
+    //   url: element.parents(".edit_user").attr('action'),
+    //   data: formData,
+    //   cache: false,
+    //   contentType: false,
+    //   processData: false,
+    //   type: 'PUT',
+    //   success: function(data, textStatus, jqXHR) {
+    //       console.log(data);
+    //         console.log(textStatus);
+    //           console.log( jqXHR);
+    //       // $('.edit_user').prepend(data.notice);
+    //   },
+    //   error: function(xhr){
+    //
+    //       // if ($("#change_ownership .collapsible-body .ms-alert").length >0){
+    //       //     $("#change_ownership .collapsible-body .ms-alert").remove();
+    //       //   }
+    //       // var $collapsibleBody = $("#change_ownership .collapsible-body");
+    //       // $collapsibleBody.prepend('<div class="ms-alert ms-alert_error left-align fade show alert-dismissible"><ul></ul></div>');
+    //       var //$divError = $(".ms-alert ul", $collapsibleBody),
+    //           errors = $.parseJSON(xhr.responseText).errors;
+    //         console.log(errors );
+    //       // jQuery.each( errors, function( i, val ) {
+    //       //     $divError.append ('<li>' + val[0].message + '</li>')
+    //       //   });
+    //   }
+    // })
+
+});
+
+  $('div.side-nav ul.user-lists li a').on('ajax:complete', function(event, xhr, settings) {
+    $('input.deadline-datepicker.hidden-datepicker').hover(handlerIn, handlerOut);
+    deadlineDatepicker($('input.deadline-datepicker'));
+  });
+
+  $("ul#collaboration-users li a").on('ajax:complete', function(event, xhr, settings) {
+    $('input.deadline-datepicker.hidden-datepicker').hover(handlerIn, handlerOut);
+    $('div[id^="incomplete_tasks_"]').each(function (){
+      mySortable($(this));
+    })
+    deadlineDatepicker($('input.deadline-datepicker'));
+  });
+
+
+  /******** SELECT NEW OWNER FOR THE LIST *********/
+  $(document).on('click','.ms-select-owner-list > a.collection-item', function(e) {
+    e.preventDefault();
+    var $this = $(this),
+        $new_list_owner =  $('#new_list_owner');
+
+    if (!$this.hasClass("active")){
+        $this.siblings().removeClass('active');
+        $this.addClass('active');
+        $new_list_owner.val($this.data('owner-id'));
+    }
+  })
+
+  /************END SELECT NEW OWNER FOR THE LIST**********/
+
+
+  /******** CANCEL NEW OWNER FOR THE LIST *********/
+  // $(document).on('click','#user_ownership_change .ms-btn.cancel', function(e) {
+  //   e.preventDefault();
+  //   var $new_list_owner =  $('#new_list_owner'),
+  //       $list_owner = $('#list_owner');
+  //
+  //   $('#change_ownership_password').val("");
+  //   $("#btn-list-ownership-change").addClass("disabled");
+  //   if ($new_list_owner.val()!= "") {
+  //       var $owner_select_item = $('#user_ownership_change a[data-owner-id= '+$new_list_owner.val()+']');
+  //       $owner_select_item.removeClass('active');
+  //       $('#user_ownership_change a[data-owner-id= '+$list_owner.val()+']').addClass('active');
+  //       $new_list_owner.val("");
+  //   }
+  // })
+  /************END SELECT NEW OWNER FOR THE LIST**********/
+
+  /******** CANCEL NEW OWNER FOR THE LIST *********/
+  $(document).on('click','.cancel', function(e) {
+    e.preventDefault();
+
+  var $this = $(this)
+      behavior = $this.data("behavior");
+
+  switch (behavior) {
+  	case 'cancel-ownership':
+      var $new_list_owner =  $('#new_list_owner'),
+          $list_owner = $('#list_owner');
+
+      $('#change_ownership_password').val("");
+      $("#btn-list-ownership-change").addClass("disabled");
+      if ($new_list_owner.val()!= "") {
+          var $owner_select_item = $('#user_ownership_change a[data-owner-id= '+$new_list_owner.val()+']');
+          $owner_select_item.removeClass('active');
+          $('#user_ownership_change a[data-owner-id= '+$list_owner.val()+']').addClass('active');
+          $new_list_owner.val("");
+      }
+      close_collapsible($this);
+  		break;
+  	case 'collapsible-close':
+      close_collapsible($this);
+  		break;
+
+    }
+
+  })
+  /************END SELECT NEW OWNER FOR THE LIST**********/
+
+  function close_collapsible(intance){
+    var li_eq = intance.parents("li.active").data("index");
+    intance.parents(".collapsible").collapsible('close', li_eq);
+  }
+
+  // CHANGE BUTTON TO ACTIVE WHEN PASSWORD IS NOT EMPTY CHANGE OWNERSHIP
+
+  $(document).on("keyup","#change_ownership_password",function() {
+    if ($(this).val().length !=0)
+    $("#btn-list-ownership-change").removeClass("disabled");
+    else
+    $("#btn-list-ownership-change").addClass("disabled");
+  })
+
+  // END CHANGE BUTTON TO ACTIVE WHEN PASSWORD IS NOT EMPTY
+
+  // CHANGE BUTTON TO ACTIVE WHEN EMAIL IS NOT EMPTY INVITATION
+
+  $(document).on("keyup","#recipient_email",function() {
+    var $invitationSubmit = $("#invitation_submit");
+    $("#error_message_invitation").html("");
+    if ($(this).val().length !=0){
+      $invitationSubmit.removeClass("disabled");
+      $('input[type="submit"]', $invitationSubmit).attr("disabled", false);
+    } else {
+      $invitationSubmit.addClass("disabled");
+      $('input[type="submit"]', $invitationSubmit).attr("disabled", true);
+    }
+  })
+
+  // END CHANGE BUTTON TO ACTIVE WHEN PASSWORD IS NOT EMPTY
+
+  $(document).on('keydown','#new_task >input#task_detail', function(event) {
+    if (event.keyCode === 13) {
+      $(this).parents("form").submit();
+      event.target.value = "";
+      return event.preventDefault();
+    }
+  });
+
+  // Functions
+
+  // dropdown-button
+  function dropdown(selector,hover){
+    $( selector ).each(function(){
+
+      $(this).dropdown({
+        inDuration: 300,
+        outDuration: 225,
+        hover: hover, // Activate on hover
+        constrainWidth: false,
+        belowOrigin: true,
+        belowOrigin: true, // Displays dropdown below the button
+        alignment: 'right' // Displays dropdown with edge aligned to the left of button
+      });
+    })}
+
+    function handlerIn(){
+      $(this).next( ".i-btn-datepicker" ).css("color","#55C2B9 !important");
+    };
+
+    function handlerOut(){
+      var color;
+      if ($(this).next( ".i-btn-datepicker" ).hasClass("md-red")){
+        color = 'rgb(238, 70, 114, 0.54)';
+      } else {
+        color = 'rgb(0, 0, 0, 0.26)';
+      }
+      $(this).next( ".i-btn-datepicker" ).css("color",color);
+    };
+
+    function change_img_nav(e){
+      var img = $(e).find("img#icon-change");
+      var img_path = img.attr('src');
+
+      if ((img.length) && (img_path.lastIndexOf("lightblue")== -1)){
+        img_path = img_path.substr(0,img_path.lastIndexOf("."))+'-lightblue.png';
+        $(e).css('color','#92daee');
+        img.attr('src',img_path);
+      } else if (img.length){
+        img_path = img_path.substr(0,img_path.lastIndexOf("-lightblue"))+'.png';
+        img.attr('src',img_path);
+        $(e).css('color','#fff');
+      }
+    }
+
+    function uploadAvatar(){
+
+      // Get a reference to the fileList
+      var files = !!this.files ? this.files : [];
+      var element = $(this);
+
+      // If no files were selected, or no FileReader support, return
+      if ( !files.length || !window.FileReader ) {
+        // element.parents("#user-edit-avatar").find('a#btn-user-avatar-upload').addClass('disable-links');
+        element.parents(".ms-upload-avatar").css('background-image','none');
+        if (element.parents(".ms-upload-avatar").find('div.mousehover').not('.empty')){
+          element.parents(".ms-upload-avatar").find('div.mousehover').addClass('empty');
+        }
+        return} ;
+
+        // Only proceed if the selected file is an image
+        if ( /^image/.test( files[0].type ) ) {
+          // Create a new instance of the FileReader
+          var reader = new FileReader();
+
+          // Read the local file as a DataURL
+          reader.readAsDataURL( files[0] );
+
+          // When loaded, set image data as background of div
+          reader.onloadend = function(){
+            // $("#imagecrop img").attr("src", this.result);
+            element.parents(".ms-upload-avatar").css("background-image", "url(" + this.result + ")");
+            // element.parents(".ms-upload-avatar").find('div.mousehover').addClass('active').removeClass('hover');
+            if (element.parents(".ms-upload-avatar").find('div.mousehover').hasClass('empty')){
+              element.parents(".ms-upload-avatar").find('div.mousehover').toggleClass('empty');
+            }
+            element.parents(".ms-upload-avatar").find('span.ms-avatar-ini').addClass('hidden').removeClass('show');
+            // element.parents("#user-edit-avatar").find('a#btn-user-avatar-upload').removeClass('disable-links');
+
+            var formData = new FormData(),
+                $input =   element;     //$("#user_image");
+              // element = $(this);
+
+            formData.append($input.attr("name"), $input[0].files[0]);
+            // element.parents("#user-edit-avatar").attr('action',element.parents("#user-edit-avatar").attr("action"));
+            // console.log(element.parents("#user-edit-avatar").attr("action"));
+            // element.parents("#user-edit-avatar").trigger('submit.rails');
+            //
+            $.ajax({
+              url: element.parents(".ms-upload-avatar").data("url"),
+              data: formData,
+              cache: false,
+              contentType: false,
+              processData: false,
+              type: 'POST',
+              success: function(response) {
+                var location;
+                location = element.parents(".ms-upload-avatar").data("crop");
+                $.get(location, function(data) {
+                  var modal_holder_selector,
+                      popupcrop,
+                      z_index = $("#ms-modal-dialog").css('z-index'),
+                      top = $("#ms-modal-dialog").offset();
+
+                  modal_holder_selector = "#popupcrop_holder";
+                  popupcrop = "#popupcrop";
+                  $(modal_holder_selector).html(data);
+
+                  $(popupcrop).css('top', '12%');
+                  $(popupcrop).css('right', '60%');
+
+                  // $(modal_holder_selector).attr('top', $("#ms-modal-dialog").attr('top') + 3%);
+                  $(popupcrop).css('display', 'block');
+                  $(popupcrop).css('position', 'absolute');
+                  $(popupcrop).css('opacity', 1);
+                  $(popupcrop).css('z-index', parseInt(z_index)+1);
+                  $(popupcrop).css('transform', 'scaleX(1)');
+
+                  // $('#popupcrop').modal();
+                  // $('#popupcrop').modal('open');
+                  return new AvatarCrop();
+                })}
+              })
+
+          }
+        }
+      }
+
+      function mouseOutAvatar(){
+        if ($('div.mousehover',this).hasClass('active')){
+          $('div.mousehover',this).toggleClass('hover');
+        }
+      }
+
+      function mouseOverAvatar(){
+
+        if (!$('div.mousehover', this ).hasClass('hover')){
+          $( 'div.mousehover', this).toggleClass( 'hover' );
+        }
+      }
+
+      function deadlineDatepicker(e){
+        // e.each(function(){
+        $(e).datepicker({
+          altFormat: "D, d MM",
+          minDate: 0,
+          showButtonPanel: true,
+          onClose: function(){
+            var date = $(this).datepicker('getDate');
+            if (date != null){
+              $.ajax({
+                complete:function(request){},
+                data:'deadline='+ date,
+                dataType:'script',
+                type:'PATCH',
+                url: $(this).siblings("i.material-icons").attr('data-href')
+              })
+            }
+          },
+          beforeShow: function( input ) {
+            var href = $(this).siblings("i.material-icons").attr("data-href-delete-deadline");
+            setTimeout(function() {
+              var buttonPane = $( input )
+              .datepicker( "widget" )
+              .find( ".ui-datepicker-buttonpane" );
+
+              $( "<button>", {
+                text: "Clear",
+                click: function() {
+                  //Code to clear your date field (text box, read only field etc.) I had to remove the line below and add custom code here
+                  $.datepicker._clearDate( input );
+                  var date = null;
+                  $.ajax({
+                    complete:function(request){},
+                    data:'deadline='+ date,
+                    dataType:'script',
+                    type:'PATCH',
+                    url: href
+                  })
+                }
+              }).appendTo( buttonPane ).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+            }, 1 );
+          },
+          onChangeMonthYear: function( year, month, instance ) {
+            setTimeout(function() {
+              var buttonPane = $( instance )
+              .datepicker( "widget" )
+              .find( ".ui-datepicker-buttonpane" );
+
+              $( "<button>", {
+                text: "Clear",
+                click: function() {
+                  //Code to clear your date field (text box, read only field etc.) I had to remove the line below and add custom code here
+                  $.datepicker._clearDate( instance.input );
+                }
+              }).appendTo( buttonPane ).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+            }, 1 );
+          }
+        });
+        // });
+
+      };
+
+      'use strict';
+
+      (function(d){
+        var mL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        var mS = ['Jan', 'Feb', 'March', 'April', 'May', 'June', 'July', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+
+        var wL = [ 'Sunday','Monday','Tuesday','Wednesday','Thursday', 'Friday','Saturday'];
+        var wS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+        d.prototype.getLongMonth = d.getLongMonth = function getLongMonth (inMonth) {
+          return gM.call(this, inMonth, mL);
+        }
+
+        d.prototype.getShortMonth = d.getShortMonth = function getShortMonth (inMonth) {
+          return gM.call(this, inMonth, mS);
+        }
+
+        d.prototype.getLongDayWeek = d.getLongDayWeek = function getLongDayWeek (inWeek) {
+          return gD.call(this, inWeek, wL);
+        }
+
+        d.prototype.getShortDayWeek = d.getShortDayWeek = function getShortDayWeek (inWeek) {
+          return gD.call(this, inWeek, wS);
+        }
+
+        function gM(inMonth, arr){
+          var m;
+
+          if(this instanceof d){
+            m = this.getMonth();
+          }
+          else if(typeof inMonth !== 'undefined') {
+            m = parseInt(inMonth,10) - 1; // Subtract 1 to start January at zero
+          }
+
+          return arr[m];
+        }
+
+        function gD(inWeek, arr){
+          var m;
+
+          if(this instanceof d){
+            m = this.getDay();
+          }
+          else if(typeof inWeek !== 'undefined') {
+            m = parseInt(inWeek,10) ; // Subtract 1 to start January at zero
+          }
+
+          return arr[m];
+        }
+      })(Date);
+
+    function toValidDate(datestring){
+      return datestring.replace(/(\d{2})(\/)(\d{2})/, "$3$2$1");
+    }
+
+
+    $.fn.animateRotate = function(ini,angle, duration, easing, complete) {
+      var args = $.speed(duration, easing, complete);
+      var step = args.step;
+      return this.each(function(i, e) {
+        args.step = function(now) {
+          $.style(e, 'transform', 'rotate(' + now + 'deg)');
+          if (step) return step.apply(this, arguments);
+        };
+        $({deg: ini}).animate({deg: angle}, args);
+      });
+    };
+
+    function msCollapsible(clase){
+
+      $('.'+ clase).each(function(){
+          $(this).collapsible({
+            onOpen: function(el) {
+              var $this = el,
+              $panel_headers = $this.find('.collapsible-header'),
+              $arrow =   $('i.material-icons.ms-open-button', $panel_headers).first();
+              $arrow.animateRotate(0,-90, 250, "linear");
+            },
+            onClose: collapsibleClose
+          });
+
+    })
+  }
+
+    function collapsibleClose(e){
+      var $this = e,
+      $panel_headers = $this.find('.collapsible-header'),
+      $arrow =   $('i.material-icons.ms-open-button',$panel_headers).first();
+      $arrow.animateRotate(-90,0, 250, "linear");
+    }
+
+
+    function droppable_all(elem){
+      $(elem).each(function (e){
+        myDroppable($(this));
+      })
+    }
+
+    function myDroppable(elem){
+      var disabled = elem.hasClass("active")? true : false;
+      elem.droppable({
+        hoverClass: 'ui-state-active',
+        tolerance: 'pointer',
+        disabled: disabled,
+        accept: function (event, ui) {
+          return true;
+        },
+        drop: function (event, ui) {
+          var obj;
+
+          if ($(ui.helper).hasClass('draggable task-box')) {
+            // ui.draggable.css( "color", "red" )
+            // console.log(ui.draggable);
+            var taskId = ui.draggable.data("task-id"),
+                currentlistId = ui.draggable.parents("div#current-list").data("list-id"),
+                listId = elem.data("nav-list-id"),
+                url = "/tasks/"+ taskId +"/changelist?currentList="+ currentlistId +"&list_id="+listId;
+
+            $.ajax({
+              type: "patch",
+              url: url,
+              data: "",
+              success: function(data){
+                if (data.errors) {
+                    Materialize.toast(data.errors, 4000);
+                  } else {
+                    Materialize.toast(data.flash, 4000);
+                  }
+              }
+            });
+          }
+        }
+      })
+    }       /* myDroppable(elem) */
+
+
+    /**** Drag task to other user ****/
+    function droppable_task_to_user_all(elem){
+      elem.each(function (e){
+        myDroppable_task_to_user($(this));
+      })
+    }
+
+    function myDroppable_task_to_user(elem){
+      var disabled = !elem.data("draggable-tasks");
+      elem.droppable({
+        hoverClass: 'ui-state-active',
+        tolerance: 'pointer',
+        disabled: disabled,
+        accept: function (event, ui) {
+          return true;
+        },
+        drop: function (event, ui) {
+          var obj;
+          if ($(ui.helper).hasClass('draggable task-box')) {
+            // ui.draggable.css( "color", "red" )
+            // console.log(ui.draggable);
+            var taskId = ui.draggable.data("task-id"),
+            currentlistId = ui.draggable.parents("div#current-list").data("list-id"),
+            userId = elem.parent().data("user-id"),
+            url = "/tasks/"+ taskId +"/changeuser?user_id="+userId;
+            // console.log(url);
+            // ui.draggable.remove();
+            $.ajax({
+              type: "patch",
+              url: url,
+              data: "",
+              success: function(data){
+                if (data.errors) {
+                    Materialize.toast(data.errors, 4000);
+                  } else {
+                    Materialize.toast(data.flash, 4000);
+                  }
+              }
+            });
+          }
+        }
+      })
+    }       /* myDroppable(elem) */
+
+    /* replace img for svg */
+    function svg(){
+          $('img[src$=".svg"]').each(function() {
+              var $img = jQuery(this);
+              var imgURL = $img.attr('src');
+              var attributes = $img.prop("attributes");
+
+              $.get(imgURL, function(data) {
+                  // Get the SVG tag, ignore the rest
+                  var $svg = jQuery(data).find('svg');
+
+                  // Remove any invalid XML tags
+                  $svg = $svg.removeAttr('xmlns:a');
+
+                  // Loop through IMG attributes and apply on SVG
+                  $.each(attributes, function() {
+                      $svg.attr(this.name, this.value);
+                  });
+
+                  // Replace IMG with SVG
+                  $img.replaceWith($svg);
+              }, 'xml');
+          });
+
+  }
+        /* end */
+/*** Crop Avatar ****/
+
+
+var AvatarCrop, jcrop_api,
+  bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+// $(function() {
+//   return new AvatarCrop();
+// });
+// $('#unhook').click(function(e) {
+//       // Destroy Jcrop widget, restore original state
+//       jcrop_api.destroy();
+//       // Update the interface to reflect un-attached state
+//       $('#unhook,#enable,.requiresjcrop').hide();
+//       $('#rehook').show();
+//       return false;
+//     });
+
+
+AvatarCrop = (function() {
+  function AvatarCrop() {
+
+    // initJcrop();
+    this.updatePreview = bind(this.updatePreview, this);
+
+    this.update = bind(this.update, this);
+
+    var height, width;
+    width = parseInt($('#preview').width());
+    height = parseInt($('#preview').height());
+
+    this.initJcrop(width, height);
+
+  }
+
+  AvatarCrop.prototype.initJcrop = function(width, height) {
+    return $('#cropbox').Jcrop({
+      minSize: [32, 32], // min crop size
+      aspectRatio : 1, // keep aspect ratio 1:1
+      bgFade: true, // use fade effect
+      bgOpacity: .3, // fade opacity
+      setSelect: [0, 0, width, height],
+      onSelect: this.update,
+      onChange: this.update,
+      boxWidth: 450,
+      boxHeight: 400
+    },function(){
+         jcrop_api = this;
+    });
+  };
+
+  AvatarCrop.prototype.update = function(coords) {
+    $('#crop_x').val(coords.x);
+    $('#crop_y').val(coords.y);
+    $('#crop_w').val(coords.w);
+    $('#crop_h').val(coords.h);
+    return this.updatePreview(coords);
+  };
+
+  AvatarCrop.prototype.updatePreview = function(coords) {
+    var rx, ry;
+    rx = 100 / coords.w;
+    ry = 100 / coords.h;
+    return $('#preview').css({
+      "background-size": Math.round(rx * $('#cropbox').width()) + 'px' + " " +Math.round(ry * $('#cropbox').height()) + 'px',
+      "background-position": '-' + Math.round(rx * coords.x) + 'px' +" "+ '-' + Math.round(ry * coords.y) + 'px'
+    });
+  };
+
+  return AvatarCrop;
+
+})();
+
+
+
+/*************** CROP AVATAR WHEN CREATE********************/
+function avatarCropModal(){
+
+  // Get a reference to the fileList
+  var files = !!this.files ? this.files : [];
+  var element = $(this);
+
+  // If no files were selected, or no FileReader support, return
+  if ( !files.length || !window.FileReader ) {
+    if (element.parents(".ms-upload-avatar").find('#origin-image-url').val()!='') {
+        element.parents(".ms-upload-avatar").css('background-image',"url(" + element.parents(".ms-upload-avatar").find('#origin-image-url').val() + ")");
+    } else{
+      element.parents(".ms-upload-avatar").css('background-image','none');
+      element.parents(".ms-upload-avatar").find('.ms-avatar-ini').addClass('show').removeClass('hidden');
+    }
+
+    if (element.parents(".ms-upload-avatar").find('div.mousehover').not('.empty')){
+      element.parents(".ms-upload-avatar").find('div.mousehover').addClass('empty');
+    }
+    return} ;
+
+    // Only proceed if the selected file is an image
+    var rFilter = /^(image\/jpeg|image\/png)$/i;
+    if (! rFilter.test(files[0].type)) {
+        $('#error_message_list').html('Please select a valid image file (jpg and png are allowed)').show();
+        return;
+    } else {
+      // check for file size
+      if (files[0].size > 250 * 1024) {
+          $('#error_message_list').html('You have selected too big file, please select a one smaller image file').show();
+          return;
+      }
+
+    // if ( /^image/.test( files[0].type ) ) {
+      // Create a new instance of the FileReader
+      $('#error_message_list').html('');
+      // preview element
+
+      var reader = new FileReader();
+
+
+      // Read the local file as a DataURL
+      reader.readAsDataURL( files[0] );
+
+      // When loaded, set image data as background of div
+      reader.onloadend = function(e){
+
+
+
+        element.parents(".ms-upload-avatar").css("background-image", "url(" + this.result + ")");
+        element.parents(".ms-upload-avatar").find('#origin-image-url').val(this.result);
+
+        if (element.parents(".ms-upload-avatar").find('div.mousehover').hasClass('empty')){
+          element.parents(".ms-upload-avatar").find('div.mousehover').toggleClass('empty');
+        }
+        element.parents(".ms-upload-avatar").find('span.ms-avatar-ini').addClass('hidden').removeClass('show');
+
+        var modal_holder_selector,
+            popupcrop,
+            z_index = $("#ms-modal-dialog").css('z-index'),
+            top = $("#ms-modal-dialog").offset();
+
+        $popupcrop = $("#popupcrop");
+
+        $popupcrop.css('top', '12%');
+        $popupcrop.css('right', '60%');
+
+        $('#popupcrop').modal({
+          dismissible: false, // Modal can be dismissed by clicking outside of the modal
+          opacity: .5, // Opacity of modal background
+          inDuration: 200, // Transition in duration
+          outDuration: 100, // Transition out duration
+          startingTop: '4%', // Starting top style attribute
+          endingTop: '150px', // Ending top style attribute
+          ready: function(modal, trigger) { // Callback for Modal open. Modal and trigger parameters available.
+          },
+          complete: function() {
+
+           } // Callback for Modal close
+        });
+
+        $('#popupcrop').modal('open');
+
+        var oImage = document.getElementById('cropbox');
+        oImage.src = e.target.result;
+
+        oImage.onload = function () { // onload event handler
+          if (typeof jcrop_api != 'undefined') {
+                 jcrop_api.destroy();
+                 jcrop_api = null;
+                 $('#cropbox').width(oImage.naturalWidth);
+                 $('#cropbox').height(oImage.naturalHeight);
+             }
+        // $("#cropbox",$popupcrop).attr('src', this.result);
+
+        return new AvatarCrop();
+      }  //End oImage.onload
+    } //End reader.onloadend
+    }
+  }
+
+/*************** END AVATAR WHILE CREATE********************/
+
+$(document).on('submit','#popupcrop form',function(e){
+
+   e.preventDefault();
+   var crop_x = $("#crop_x", this),
+       crop_y = $("#crop_y", this),
+       crop_w = $("#crop_w", this),
+       crop_h = $("#crop_h", this),
+       $ms_upload_avatar = $(".ms-upload-avatar"),
+       f_crop_x = $("#f_crop_x", $ms_upload_avatar),
+       f_crop_y = $("#f_crop_y", $ms_upload_avatar),
+       f_crop_w = $("#f_crop_w", $ms_upload_avatar),
+       f_crop_h = $("#f_crop_h", $ms_upload_avatar);
+
+
+
+  f_crop_x.val(crop_x.val());
+  f_crop_y.val(crop_y.val());
+  f_crop_w.val(crop_w.val());
+  f_crop_h.val(crop_h.val());
+
+  $('#popupcrop').modal('close');
+});
+
+
+
+/*******list validation******/
+// function list_validation() {
+//   var name = document.getElementById("list_name").value;
+//
+//   if (name === '' ) {
+//     alert("Please fill name!");
+//     return false;
+//   } else {
+//     return true;
+//   }
+// }
+
+
+
+//
+// function fileSerealize(file){
+//
+//   // Get a reference to the fileList
+//   var files = !!this.files ? this.files : [];
+//   var element = $(this);
+//
+//   // If no files were selected, or no FileReader support, return
+//   if ( !files.length || !window.FileReader ) {
+//     element.parents("#user-edit-avatar").find('a#btn-user-avatar-upload').addClass('disable-links');
+//     element.parents(".ms-upload-avatar").css('background-image','none');
+//     if (element.parents(".ms-upload-avatar").find('div.mousehover').not('.empty')){
+//       element.parents(".ms-upload-avatar").find('div.mousehover').addClass('empty');
+//     }
+//     return} ;
+//
+//     // Only proceed if the selected file is an image
+//     if ( /^image/.test( files[0].type ) ) {
+//       // Create a new instance of the FileReader
+//       var reader = new FileReader();
+//
+//       // Read the local file as a DataURL
+//       reader.readAsDataURL( files[0] );
+//
+//       // When loaded, set image data as background of div
+//       reader.onloadend = function(){
+//         // $("#imagecrop img").attr("src", this.result);
+//         element.parents(".ms-upload-avatar").css("background-image", "url(" + this.result + ")");
+//         // element.parents(".ms-upload-avatar").find('div.mousehover').addClass('active').removeClass('hover');
+//         if (element.parents(".ms-upload-avatar").find('div.mousehover').hasClass('empty')){
+//           element.parents(".ms-upload-avatar").find('div.mousehover').toggleClass('empty');
+//         }
+//         element.parents(".ms-upload-avatar").find('span.ms-avatar-ini').addClass('hidden').removeClass('show');
+//         element.parents("#user-edit-avatar").find('a#btn-user-avatar-upload').removeClass('disable-links');
+//
+//         var formData = new FormData(),
+//             $input =   element;     //$("#user_image");
+//           // element = $(this);
+//
+//         formData.append($input.attr("name"), $input[0].files[0]);
+//         // element.parents("#user-edit-avatar").attr('action',element.parents("#user-edit-avatar").attr("action"));
+//         // console.log(element.parents("#user-edit-avatar").attr("action"));
+//         // element.parents("#user-edit-avatar").trigger('submit.rails');
+//         //
+//         console.log(element.parents(".ms-upload-avatar").data("url"));
+//         $.ajax({
+//           url: element.parents(".ms-upload-avatar").data("url"),
+//           data: formData,
+//           cache: false,
+//           contentType: false,
+//           processData: false,
+//           type: 'POST',
+//           success: function(response) {
+//             var location;
+//             location = element.parents(".ms-upload-avatar").data("crop");
+//             $.get(location, function(data) {
+//               var modal_holder_selector,
+//                   popupcrop,
+//                   z_index = $("#ms-modal-dialog").css('z-index'),
+//                   top = $("#ms-modal-dialog").offset();
+//
+//               modal_holder_selector = "#popupcrop_holder";
+//               popupcrop = "#popupcrop";
+//               $(modal_holder_selector).html(data);
+//
+//               $(popupcrop).css('top', '12%');
+//               $(popupcrop).css('right', '60%');
+//
+//               // $(modal_holder_selector).attr('top', $("#ms-modal-dialog").attr('top') + 3%);
+//               $(popupcrop).css('display', 'block');
+//               $(popupcrop).css('position', 'absolute');
+//               $(popupcrop).css('opacity', 1);
+//               $(popupcrop).css('z-index', parseInt(z_index)+1);
+//               $(popupcrop).css('transform', 'scaleX(1)');
+//
+//               // $('#popupcrop').modal();
+//               // $('#popupcrop').modal('open');
+//               return new AvatarCrop();
+//             })}
+//           })
+//
+//       }
+//     }
+//   }

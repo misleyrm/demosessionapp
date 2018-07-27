@@ -1,0 +1,14 @@
+<table class="table-notification-settings" cellspacing="0" cellpadding="0">
+    <thead>
+      <tr>
+          <th></th>
+          <% @notification_options.each do |notification_option| %>
+              <th class="uppercase" width="15%"><%= notification_option.name %></th>
+          <% end %>
+      </tr>
+    </thead>
+
+    <tbody>
+      <%= render partial: "users/notification_layout/notification_setting_tr", collection: @notification, as: :notification_type %>
+    </tbody>
+</table>

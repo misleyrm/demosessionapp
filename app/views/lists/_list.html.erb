@@ -1,0 +1,57 @@
+<%= content_tag :div, data: {"list-id": "#{list.id}"}, id: "current-list" do%>
+    <section class="center row">
+      <div class="col s12">
+        <% unless (list.all_tasks?) %>
+            <div class="share-icons">
+                <div class="list-collaboration-users">
+                    <div class="right">
+                        <%= content_tag :ul, id: "collaboration-users", class: "sort_c_users", data: {"url" => "#{sort_list_collaboration_users_path(list)}"} do%>
+                              <% if has_collaborations?(list) %>
+                                  <% if  list.collaboration_users.where(['user_id != ?', current_user.id]).count > 0 %>
+                                     <%= render partial: "lists/collaboration_user", collection: list.collaboration_users.where(['user_id != ?', user.id]).order('position ASC'), as: :collaboration_user, locals: { active_users: active_users,current_user: user }%>
+                                  <% end %>
+                              <% end %>
+                              <%= render partial: "lists/collaboration_user", locals: {collaboration_user: list.owner, active_users: active_users, current_user: user} %>
+                              <%= render partial: "lists/collaboration_user", locals: {collaboration_user: user, active_users: active_users, current_user: user} if !user.owner?(list)%>
+                        <% end %>
+                        <ul id="collaboration-menu">
+                          <% if has_collaborations?(list) %>
+                              <li class="ms-view-all">
+                                <%= link_to list_collaboration_users_path(list),id: 'show_all_collaborators',class:"tooltipped", data: {behavior: 'modal', tooltip: 'Show all members', remote: true} do%>
+                                    <span class="circle-icon valign-wrapper">
+                                      <% if active_users.empty? %>
+                                              <%= image_tag(asset_path('assets/showAll.svg',skip_pipeline: true)) %>
+                                        <% else%>
+                                          <%= (active_users.count >= list.collaboration_users.count)? image_tag(asset_path('assets/hideAll.svg',skip_pipeline: true)) : image_tag(asset_path('assets/showAll.svg',skip_pipeline: true)) %>
+                                        <%end%>
+                                    </span>
+                                <% end %>
+                              </li>
+                          <% end %>
+                          <% if (current_user.owner?(list)) %>
+                              <li class="ms-add">
+                                <%= link_to new_list_invitation_path(list),id: 'new_invitation_link',class:"tooltipped", data: {behavior: 'modal', tooltip: 'Invite a new member', remote: true} do%>
+                                    <span class="circle-icon valign-wrapper">
+                                        <%= image_tag(asset_path('assets/adduser.svg',skip_pipeline: true)) %>
+                                    </span>
+                                <% end %>
+                              </li>
+                          <% end %>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        <% end %>
+      </div>
+    </section>
+    <!--  SECTION LIST USERS -->
+    <section id="list-users">
+      <ul>
+        <%= render partial: "users/list_user", locals: {user: user, list: list} %>
+      </ul>
+      <%= content_tag :ul, class: "sort_c_users", data: {"url" => "#{sort_list_collaboration_users_path(list)}"} do%>
+        <%= render partial: "users/list_user", collection: active_users.without(user), as: :user, locals: { list: list } if (!active_users.blank? ) %>
+      <% end %>
+    </section>
+    <!--  END SECTION LIST USERS -->
+<% end %>

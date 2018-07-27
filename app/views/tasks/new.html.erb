@@ -1,0 +1,4 @@
+<div class="forms">
+		<h2 class="modal-title center-align"><%= (params[:type].present? || params[:type]=="blocker") ? 'New Blocker' : 'New Task'  %></h2>
+	  <%= (params[:type].present? || params[:type]=="blocker") ? (render 'formBlocker') : (render 'form')  %>
+</div>

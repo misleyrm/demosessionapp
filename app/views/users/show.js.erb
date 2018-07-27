@@ -1,0 +1,74 @@
+
+sortableCollaborationUsers($('.sort_c_users'));
+<% if params[:type].present? %>
+      var $list = $('[data-list-id = "<%= current_list.id %>"]');
+      var $listUsers = $('#list-users .sort_c_users',$list);
+      var $collaboration_user = $('#collaboration-users li#collaboration_user_<%= @user.id %>',$list);
+      var $user = $('[data-user-id = "<%= @user.id %>"]',$list),
+          tooltip = $("a.tooltipped", $collaboration_user).data("tooltip"),
+          text, $elem;
+      if ($collaboration_user.hasClass('active')) {
+          $collaboration_user.removeClass('active');
+          text = tooltip.replace("Hide", "Show");
+          $("a.tooltipped", $collaboration_user).attr("data-tooltip",text);
+          $('.tooltipped').tooltip({delay: 50});
+          $user.remove();
+          var url = "<%= asset_path('assets/showAll.svg',skip_pipeline: true) %>";
+          var x = document.createElement("IMG");
+           x.setAttribute("src", url);
+           x.setAttribute("width", "15");
+           x.setAttribute("height", "15");
+
+          $("a#show_all_collaborators span.circle-icon").html("");
+          $("a#show_all_collaborators .circle-icon").append(x);
+          svg();
+
+          $("a#show_all_collaborators", $collaboration_menu).attr("data-tooltip",text);
+        } else {
+          $collaboration_user.addClass('active');
+          text = tooltip.replace("Show", "Hide");
+
+          var sortedIDs = $("#collaboration-users").sortable("toArray");
+          $("a.tooltipped", $collaboration_user).attr("data-tooltip",text);
+          var position = $.inArray( "collaboration_user_<%= @user.id %>", sortedIDs );
+
+          if ($("#list-users > ul.sort_c_users").children("li:eq(" + position + ")").length >0){
+            $("<%= j render partial: 'users/list_user', locals:{user: @user, list: current_list } %>").insertBefore($("#list-users > ul.sort_c_users").children("li:eq(" + position + ")"));
+          }else{
+              $("#list-users > ul.sort_c_users").append("<%= j render partial: 'users/list_user', locals:{user: @user, list: current_list } %>");
+          }
+
+           //$listUsers.append("<%= j render partial: 'users/list_user', locals:{user: @user, list: current_list } %>");
+          $elem = $("#list_user_<%= @user.id %>");
+
+          if ($elem.length > 0){
+            myDroppable_task_to_user($elem);
+          }
+          $('input[id="task_user_id"]',$user).val("<%= @user.id %>");
+          $('.tooltipped').tooltip({delay: 50});
+          msCollapsible("collapsible");
+          $('div[id^="incomplete_tasks_"]').each(function (){
+            mySortable($(this));
+          })
+
+          droppable_all('li[id^="drop_zone_"]');
+          $('.edit_task').submitOnCheck();
+          deadlineDatepicker($('input.deadline-datepicker'));
+          $('input.deadline-datepicker.hidden-datepicker').hover(handlerIn, handlerOut);
+
+          if (sortedIDs.length == $("#list-users > ul.sort_c_users").length) {
+            var url = "<%= asset_path('assets/hideAll.svg',skip_pipeline: true) %>";
+            var x = document.createElement("IMG");
+             x.setAttribute("src", url);
+             x.setAttribute("width", "15");
+             x.setAttribute("height", "15");
+
+            $("a#show_all_collaborators .circle-icon").html("");
+            $("a#show_all_collaborators .circle-icon").append(x);
+            svg();
+            // $("a#show_all_collaborators >i", $collaboration_menu).html("visibility_off");
+            $("a#show_all_collaborators", $collaboration_menu).attr("data-tooltip",text);
+            $('.tooltipped').tooltip({delay: 50});
+          }
+       }
+<% end %>

@@ -1,0 +1,64 @@
+document.addEventListener("turbolinks:load", function(){
+
+    // deadlineDatepicker();
+    $("i.i-btn-datepicker").on('click', function(){
+       $(this).siblings(".hidden-datepicker").focus();
+    })
+
+    $( ".show_blockers ul" ).mouseenter(function(){
+        // $( this ).css("background-color","red");
+      })
+      .mouseleave( function() {
+        // $( this ).css("background-color","white");
+      })
+
+    $('div[id^="incomplete_tasks_"]').each(function (){
+      mySortable($(this));
+    })
+
+    droppable_all('li[id^="drop_zone_"]');
+
+});
+
+function mySortable(elem){
+ if (elem.is(':visible')){
+  elem.sortable({
+    update: function(e,ui){
+      // send the updated order via ajax
+       $.ajax({
+           type: "PUT",
+           url: $(this).data("url"),
+           data: $(this).sortable('serialize'),
+       });
+    }
+  });
+  }
+}
+
+
+function sortableCollaborationUsers(elem){
+ if (elem.is(':visible')){
+  elem.sortable({
+    items: ">li:not(.disabled)",
+    start: function (event, ui) {
+              $(this).data("position", ui.item.index());
+          },
+          update: function (event, ui) {
+              var originalP = $(this).data("position");
+              elem.not($(this)).each(function (i, e) {
+                  if (originalP > ui.item.index()) {
+                      $(this).children("li:eq(" + originalP + ")").insertBefore($(this).children("li:eq(" + ui.item.index() + ")"));
+                  } else {
+                      $(this).children("li:eq(" + originalP + ")").insertAfter($(this).children("li:eq(" + ui.item.index() + ")"));
+                  }
+              })
+
+             $.ajax({
+                 type: "PUT",
+                 url: $(this).data("url"),
+                 data: $(this).sortable('serialize')
+             });
+          }
+    }).disableSelection();
+  }
+}

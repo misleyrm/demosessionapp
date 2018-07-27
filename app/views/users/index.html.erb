@@ -1,0 +1,53 @@
+<div class="user" id="user-new">
+  <div class="row">
+    <div class="col s12 m6">
+      <div class="card">
+        <div class="card-title">
+          <div class="row">
+            <div class="col s12 m9"><h1></h1></div>
+            <div class="col s12 m3"><i class="material-icons large">portrait</i></div>
+          </div>
+        </div>
+        <div class="card-content">
+          <table>
+            <thead>
+              <tr>
+                <th>First name</th>
+                <th>Last name</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <% @users.each do |u|%>
+              <%= u %>
+              <tr>
+                <td><%= u.first_name %><%= u.id %></td>
+                <td><%= u.last_name %></td>
+
+              </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <div class="card-action">
+          <div class="row center-align">
+            <div class="col s12 m4">
+              <%= link_to 'Back', sessions_path %>
+            </div>
+            <div class="col s12 m4">
+            </div>
+            <div class="col s12 m4">
+            </div>
+            <div class="col s12 m12">
+              <% if current_user %>
+              Signed in as <%= current_user.first_name.capitalize %> | <%= link_to "Logout", '/logout' %>
+              <% else %>
+              <% login_path %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

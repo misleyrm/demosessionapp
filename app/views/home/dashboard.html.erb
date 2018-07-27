@@ -1,0 +1,31 @@
+<div class="wrapper vertical-sidebar" id="full-page">
+  <% if logged_in? %>
+      <header id="header" class="page-topbar">
+          <%= render 'layouts/topnavbar' %>
+      </header>
+  <% end %>
+  <div id="main">
+    <div class="wrapper">
+      <aside class="navigationbar" data-nav-id="<%= current_user.id %>">
+          <%= render partial: 'layouts/navigation', locals: { user: current_user } %>
+      </aside>
+      <section id="content" >
+        <div id="page-content" class="container">
+          <%#= render :partial => 'shared/error_messages_alert', :locals => {:object => @list} %>
+          <%= content_tag "div", id: "error_message" do%>
+             <%= render :partial => 'shared/error_messages', :locals => {:object => @list} %>
+          <% end %>
+          <div id="main_center">
+              <%= render partial: "lists/list", locals: { list: @list, user: @user, active_users: @active_users } %>
+          </div>
+        </div>
+      </section>
+  </div><!-- End wrapper-->
+</div><!-- End main-->
+<!-- Footer -->
+<%= render 'layouts/footer' %>
+<!-- Modal Structure -->
+<div id="modal-holder"></div>
+<div id="popupcrop_holder">
+  <%= render "shared/cropPopUp" %>
+</div>

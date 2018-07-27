@@ -1,0 +1,52 @@
+$('#ms-modal-dialog').modal("close");
+var $form =  $('#application-date form'),
+    $content = $('#page-content #main_center'),
+    $nav = $('[data-nav-id = "<%=@user.id%>"]'),
+    $ulCreated = $('ul#ulCreated', $nav);
+
+
+$("li", $ulCreated ).removeClass('ui-droppable-disabled');
+
+if($('#new-list').length){
+  $('#new-list').remove();
+}
+if($('#ms-user-edit').length){
+  $('#ms-user-edit').remove();
+}
+if($('#ms-user-nav-setting').length){    //#ms-tabsSetting
+  $('#ms-user-nav-setting').remove();   //#ms-tabsSetting
+}
+if ($('body').hasClass('expand-header')){
+  $('body').removeClass('expand-header');
+  $('.nav-main ul.right').removeClass('hide');
+}
+
+$content.html("<%= j render partial: 'lists/list', locals: { list: @list, user: @user, active_users: @active_users } %>");
+droppable_all('li[id^="drop_zone_"]');
+
+if (!$('[data-nav-list-id= "<%=@list.id%>"]', $nav).hasClass('active')){
+  $('[data-nav-list-id= "<%=@list.id%>"]', $nav).addClass('active');
+}
+
+$("#ms-link-listSetting").html("<%= j render partial: 'lists/link_listSetting', locals:{list: @list, user: @user} %>");
+
+$form.attr("action","lists/<%= @list.id %>");
+$form.attr("id","edit_list_<%= @list.id %>");
+$('.edit_task').submitOnCheck();
+dropdown("[id^=dropdown_list_]","false");
+msCollapsible("collapsible");
+
+
+$('#nav-list').html("<%= j render partial: 'lists/nav_list_name', locals: {list: @list} %>");
+svg();
+$('.nav-main li.avatar-list').hasClass('avatar-user').removeClass('avatar-user');
+$('#nav-list').attr( "data-topnavbar-list-id", "<%= @list.id %>" );
+sortableCollaborationUsers($('.sort_c_users'));
+
+$('.tooltipped').tooltip({delay: 50});
+
+$('#application-date .datepicker').pickadate({
+  disable: [
+    { from: [0,0,0], to: gon.startDate }
+  ]
+});

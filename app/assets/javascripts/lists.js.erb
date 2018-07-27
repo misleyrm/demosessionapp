@@ -1,0 +1,214 @@
+// $(document).on('turbolinks:load',function(){
+  // $('.dropdown-button').dropdown();
+  $(".button-collapse").sideNav();
+  $('.edit_task').submitOnCheck();
+  $('.modal-trigger').modal();
+// })
+
+  // CHANGE IMAGE IN LIST NEW FILE UPLOAD
+  $(document).on("mouseout", 'label[for="list_avatar"]', mouseOutAvatar);
+  $(document).on("mouseover", 'label[for="list_avatar"]', mouseOverAvatar);
+
+  //  change ownership
+  $(document).on("click","a#btn-list-ownership-change",function(e){
+      e.preventDefault;
+      submit_ownership_change(e)
+  })
+
+  function submit_ownership_change(event) {
+    var formData = new FormData(),
+        $form_user_ownership_change = $("#user_ownership_change"),
+        $new_owner = $("#new_list_owner",$form_user_ownership_change),
+        $current_password = $("#change_ownership_password",$form_user_ownership_change);
+
+    formData.append('new_list_owner', $new_owner.val());
+    formData.append('current_password', $current_password.val());
+    do_submit(formData);
+    return false;
+  }
+
+  function keypressed(event) {
+    var charcode = (event.which) ? event.which : window.event.keyCode;
+    if (charcode == 13) {
+      return submit_ownership_change(event);
+    }
+    return true;
+  }
+
+  function do_submit(submit_values) {
+
+    $.ajax({
+      url: $("#btn-list-ownership-change").data("src"),
+      data: submit_values,
+      cache: false,
+      contentType: false,
+      processData: false,
+      type: 'POST',
+      success: function(response) {
+
+        if (response.status=="success"){
+          Materialize.toast('Your changes were saved', 4000);
+          var $current_password = $("#change_ownership_password");
+          $current_password.val('');
+          $('#change_ownership').collapsible('close', 0);
+        }
+        },error: function(xhr){
+
+            if ($("#change_ownership .collapsible-body .ms-alert").length >0){
+                $("#change_ownership .collapsible-body .ms-alert").remove();
+              }
+            var $collapsibleBody = $("#change_ownership .collapsible-body");
+            $collapsibleBody.prepend('<div class="ms-alert ms-alert_error left-align fade show alert-dismissible"><ul></ul></div>');
+            var $divError = $(".ms-alert ul", $collapsibleBody),
+                errors = $.parseJSON(xhr.responseText).errors;
+
+            jQuery.each( errors, function( i, val ) {
+                $divError.append ('<li>' + val[0].message + '</li>')
+              });
+        }
+    })
+  }
+// end change ownership
+
+var app = window.app = {};
+
+function split(val) {
+    return val.split(/@\s*/);
+}
+
+function extractLast(term) {
+    return split(term).pop();
+}
+
+/*******************  CREATE LIST **********************/
+$(document).on('click','form#form_list a[data-behavior="submit"]', {}, function(event){
+    var $form = $(this).parents('form');
+    var $formData = new FormData(),
+        val = 0;
+
+    event.preventDefault();
+    if ($("input#list_image").val() != 0){
+      $formData.append('list[image]', $("input#list_image")[0].files[0]);
+    }
+
+    $formData.append('list[name]', $("input#list_name").val());
+    $formData.append('list[description]', $("textarea#list_description").val());
+    $formData.append('list[crop_x]', $("#f_crop_x").val());
+    $formData.append('list[crop_y]', $("#f_crop_y").val());
+    $formData.append('list[crop_h]', $("#f_crop_h").val());
+    $formData.append('list[crop_w]', $("#f_crop_w").val());
+
+    create_submit($formData,$form);
+
+});
+
+/*******************  EDIT LIST **********************/
+// $(document).on('click','form#edit_list a[data-behavior="submit"]', {}, function(event){
+//     var $form = $(this).parents('form');
+//     var $formData = new FormData(),
+//         val = 0;
+//
+//     event.preventDefault();
+//     if ($("input#list_image").val() != 0){
+//       $formData.append('list[image]', $("input#list_image")[0].files[0]);
+//     }
+//
+//     $formData.append('list[name]', $("input#list_name").val());
+//     $formData.append('list[description]', $("input#list_description").val());
+//
+//     create_submit($formData,$form);
+//
+// });
+
+// CHANGE BUTTON TO ACTIVE WHEN LIST NAME IS NOT EMPTY
+function create_submit(submit_values,form) {
+ var $method = $("input[name='_method']", form).val();
+
+  $.ajax({
+    url: form.attr('action'),
+    data: submit_values,
+    cache: false,
+    contentType: false,
+    processData: false,
+    type: $method,
+    success: function(response) {
+
+      if (response.status=="success"){
+        if (form.hasClass("new_list")) {
+          form[0].reset();
+          $('label[for="list_name"]').removeClass('active');
+          $('label[for="list_description"]').removeClass('active');
+          $("a[data-behavior='submit']",form).attr("disabled", true);
+          $('.ms-upload-avatar').css('background-image','none');
+          $('.ms-upload-avatar .mousehover.hover').addClass('empty');
+        }
+        var   $pageContent = $('#page-content'),
+        $list = $('[data-list-id = "' + response.list.id + '"]', $pageContent),
+        $user = $('[data-user-id = "' + response.list.user_id+ '"]', $list),
+        $nav = $('[data-nav-id = "' + response.list.user_id + '"]'),
+        $listNav = $('[data-nav-list-id = "' + response.list.id + '"]'),
+        $chipList = $('.chip', $listNav),
+        $ul = $('ul#ulCreated', $nav),
+        $add = $("#ms-add", $ul);
+console.log(response.list.id);
+$(response.html).insertBefore($add);
+
+        if ($("#error_explanation").length >0){
+              $("#error_explanation ul").html("");
+            } else {
+              $("#form_list").prepend('<div id="error_explanation" class="ms-alert ms-alert_notice left-align fade show alert-dismissible"><ul></ul></div>');
+
+            }
+        var $divError = $("#error_explanation");
+        $( 'ul', $divError).append ('<li>' + response.flash + '<button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="close_error(this);" ><span aria-hidden="true">&times;</span></button></li>');
+
+      } else if (response.status=="fail") {
+          var $divError = $("#error_explanation");
+
+          if ($divError.length > 0){
+              $divError.remove();
+            }
+           form.prepend(response.htmlerrors);
+           $.each(response.errors, function (index, value) {
+              $("#form_list input[name='list["+index+"]']").addClass("invalid");
+           })
+      }
+    },errors: function(xhr){
+          var $divError = $("#error_explanation"),
+          errors = $.parseJSON(xhr.responseText).errors;
+
+          if ($divError.length > 0){
+              $divError.html('');
+            }
+
+          $divError.html('<ul></ul>');
+          jQuery.each( errors, function( i, val ) {
+            $( 'ul', $divError).append ('<li>' + val[0].message + '<button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="close_error(this);" ><span aria-hidden="true">&times;</span></button></li>')
+            });
+      }
+  })
+}
+
+function close_error(el){
+  if ($(el).parent().closest('li').length ==0){
+    $(el).parent().remove();
+  }else{
+    $(el).parents("#error_explanation").remove();
+  }
+}
+
+$(document).on("keyup","form#form_list #list_name",function(){
+  var $form = $(this).parents("form#form_list");
+
+  if ($.trim($(this).val()).length !=0){
+    $("a[data-behavior='submit']",$form).attr("disabled", false);
+    $(this).removeClass("invalid");
+    $('#error_explanation').remove();}
+  else
+    $("a[data-behavior='submit']",$form).attr("disabled", true);
+})
+
+// END CHANGE BUTTON TO ACTIVE WHEN LIST NAME IS NOT EMPTY
+
+
+/******************* END CREATE LIST **********************/
