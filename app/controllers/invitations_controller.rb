@@ -1,6 +1,6 @@
 class InvitationsController < ApplicationController
   layout "modal"
-  # include InvitationsHelper
+  include InvitationsHelper
   before_action :require_logged_in
   before_action :set_list
   before_action :set_invitation, only: [:show, :destroy, :resend_invitation, :update]
